@@ -1,38 +1,34 @@
 %macro fillrate_all_vars(data=);
 
-    /* Step 1: Get variable metadata */
+    /* Step 1: Get variable info */
     proc contents data=&data out=varinfo(keep=name type) noprint;
     run;
 
     /* Step 2: Separate numeric and character variables */
-    data num_vars char_vars;
-        set varinfo;
-        if type = 1 then output num_vars;
-        else if type = 2 then output char_vars;
-    run;
+    proc sql noprint;
+        select name into :num_vars separated by ' '
+        from varinfo where type = 1;
 
-    /* Step 3: Get total count */
+        select name into :char_vars separated by ' '
+        from varinfo where type = 2;
+    quit;
+
+    /* Step 3: Get total number of rows */
     %let dsid = %sysfunc(open(&data));
     %let total = %sysfunc(attrn(&dsid, nobs));
     %let rc = %sysfunc(close(&dsid));
 
-    /* Step 4: Calculate missing for numeric variables */
-    %let num_vars_list=;
-    proc sql noprint;
-        select name into :num_vars_list separated by ' '
-        from num_vars;
-    quit;
-
-    %if "&num_vars_list" ne "" %then %do;
+    /* Step 4: Missing count for numeric variables using PROC MEANS */
+    %if "&num_vars" ne "" %then %do;
         proc means data=&data noprint;
-            var &num_vars_list;
-            output out=miss_num n= / autoname;
+            var &num_vars;
+            output out=num_stats n= / autoname;
         run;
 
-        data miss_num_fmt;
-            length variable $32 type $9 missing fillrate 8;
-            set miss_num;
-            array n_vars {*} n_:;
+        data num_fill;
+            set num_stats;
+            length variable $32 type $9;
+            array n_vars n_:;
             do i = 1 to dim(n_vars);
                 variable = scan(vname(n_vars[i]), 2, '_');
                 type = "Numeric";
@@ -44,51 +40,50 @@
         run;
     %end;
 
-    /* Step 5: Calculate missing for character variables */
-    %let char_vars_list=;
-    proc sql noprint;
-        select name into :char_vars_list separated by ' '
-        from char_vars;
-    quit;
-
-    %if "&char_vars_list" ne "" %then %do;
-        data miss_char_fmt;
+    /* Step 5: Missing count for character variables using DATA step */
+    %if "&char_vars" ne "" %then %do;
+        data char_fill;
             set &data end=last;
-            length variable $32 type $9 missing fillrate 8;
+            array chars {*} $ &char_vars;
             retain
-                %do i=1 %to %sysfunc(countw(&char_vars_list));
-                    %scan(&char_vars_list, &i)_: 0
+                %do i=1 %to %sysfunc(countw(&char_vars));
+                    miss_&sysfunc(scan(&char_vars, &i)) 0
                 %end;
             ;
 
-            %do i=1 %to %sysfunc(countw(&char_vars_list));
-                if missing(%scan(&char_vars_list, &i)) then %scan(&char_vars_list, &i)_miss + 1;
+            %do i=1 %to %sysfunc(countw(&char_vars));
+                if missing(%scan(&char_vars, &i)) then miss_%scan(&char_vars, &i) + 1;
             %end;
 
             if last then do;
-                %do i=1 %to %sysfunc(countw(&char_vars_list));
-                    variable = "%scan(&char_vars_list, &i)";
+                %do i=1 %to %sysfunc(countw(&char_vars));
+                    variable = "%scan(&char_vars, &i)";
                     type = "Character";
-                    missing = %scan(&char_vars_list, &i)_miss;
+                    missing = miss_%scan(&char_vars, &i);
                     fillrate = round((1 - (missing / &total)) * 100, 0.01);
                     output;
                 %end;
             end;
+
+            length variable $32 type $9;
             keep variable type missing fillrate;
         run;
     %end;
 
-    /* Step 6: Combine and show */
+    /* Step 6: Combine both */
     data fillrate_result;
-        set
-            %if %symexist(num_vars_list) %then miss_num_fmt;
-            %if %symexist(char_vars_list) %then miss_char_fmt;
+        set 
+            %if %symexist(num_fill) or "&num_vars" ne "" %then %do; num_fill %end;
+            %if %symexist(char_fill) or "&char_vars" ne "" %then %do; char_fill %end;
         ;
     run;
 
     proc print data=fillrate_result noobs label;
-        label variable="Variable Name" type="Type" missing="Missing Count" fillrate="Fill Rate (%)";
-        title "Fill Rate Summary for Dataset: &data";
+        label variable = "Variable Name"
+              type     = "Type"
+              missing  = "Missing Count"
+              fillrate = "Fill Rate (%)";
+        title "Fill Rate Report for Dataset: &data";
     run;
 
 %mend;
