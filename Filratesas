@@ -1,38 +1,65 @@
 %macro fillrate_all_vars(data=);
 
-    /* Step 1: Get variable list with type */
-    proc contents data=&data out=var_list(keep=name type) noprint;
+    /* Step 1: Get metadata */
+    proc contents data=&data out=varinfo(keep=name type) noprint;
     run;
 
-    /* Step 2: Get total number of observations */
+    /* Step 2: Create macro variables for all variable names */
+    proc sql noprint;
+        select name into :varlist separated by ' '
+        from varinfo;
+        select count(*) into :varcount
+        from varinfo;
+    quit;
+
+    /* Step 3: Count total number of observations */
     %let dsid = %sysfunc(open(&data));
     %let total = %sysfunc(attrn(&dsid, nobs));
     %let rc = %sysfunc(close(&dsid));
 
-    /* Step 3: Create macro logic to calculate missing per variable */
-    data _null_;
-        set var_list end=last;
-        if _n_ = 1 then call execute('data fillrate_result; length variable $32 type $9;');
+    /* Step 4: Loop over variables to get missing counts */
+    data fillrate_result;
+        length variable $32 type $9;
+        set &data end=last;
 
-        if type = 1 then do;
-            call execute('missing_count = nmiss(' || strip(name) || ');');
+        array _chars {*} _character_;
+        array _nums {*} _numeric_;
+
+        retain 
+        %do i=1 %to &varcount;
+            %let var = %scan(&varlist, &i);
+            miss_&var 0
+        %end;
+
+        ;
+
+        /* Count missing per row */
+        %do i=1 %to &varcount;
+            %let var = %scan(&varlist, &i);
+            if missing(&var) then miss_&var + 1;
+        %end;
+
+        if last then do;
+            %do i=1 %to &varcount;
+                %let var = %scan(&varlist, &i);
+
+                variable = "&var";
+                type = ifc(vtype(&var) = 'C', 'Character', 'Numeric');
+                missing = miss_&var;
+                fillrate = round((1 - (missing / &total)) * 100, 0.01);
+                output;
+            %end;
         end;
-        else do;
-            call execute('missing_count = sum(' || strip(name) || = "");');
-        end;
-
-        call execute('fillrate = round((1 - (missing_count / ' || "&total" || ')) * 100, 0.01);');
-        call execute('variable = "' || strip(name) || '";');
-        call execute('type = "' || ifc(type=1, 'Numeric', 'Character') || '";');
-        call execute('output;');
-
-        if last then call execute('run;');
+        stop;
     run;
 
-    /* Step 4: Display result */
-    proc print data=fillrate_result noobs;
-        var variable type fillrate;
-        title "Fill Rate (%) of Variables in &data";
+    proc print data=fillrate_result noobs label;
+        label
+            variable = "Variable Name"
+            type     = "Type"
+            missing  = "Missing Count"
+            fillrate = "Fill Rate (%)";
+        title "Fill Rate Summary for Dataset: &data";
     run;
 
 %mend;
