@@ -1,89 +1,56 @@
-%macro fillrate_all_vars(data=);
+%macro char_fillrate(data=);
 
-    /* Step 1: Get variable info */
+    /* Step 1: Get character variable names */
     proc contents data=&data out=varinfo(keep=name type) noprint;
     run;
 
-    /* Step 2: Separate numeric and character variables */
     proc sql noprint;
-        select name into :num_vars separated by ' '
-        from varinfo where type = 1;
-
         select name into :char_vars separated by ' '
-        from varinfo where type = 2;
+        from varinfo
+        where type = 2;  /* type=2 means character */
     quit;
 
-    /* Step 3: Get total number of rows */
+    %let total_obs = 0;
     %let dsid = %sysfunc(open(&data));
-    %let total = %sysfunc(attrn(&dsid, nobs));
-    %let rc = %sysfunc(close(&dsid));
-
-    /* Step 4: Missing count for numeric variables using PROC MEANS */
-    %if "&num_vars" ne "" %then %do;
-        proc means data=&data noprint;
-            var &num_vars;
-            output out=num_stats n= / autoname;
-        run;
-
-        data num_fill;
-            set num_stats;
-            length variable $32 type $9;
-            array n_vars n_:;
-            do i = 1 to dim(n_vars);
-                variable = scan(vname(n_vars[i]), 2, '_');
-                type = "Numeric";
-                missing = &total - n_vars[i];
-                fillrate = round((n_vars[i] / &total) * 100, 0.01);
-                output;
-            end;
-            keep variable type missing fillrate;
-        run;
+    %if &dsid %then %do;
+        %let total_obs = %sysfunc(attrn(&dsid, nobs));
+        %let rc = %sysfunc(close(&dsid));
     %end;
 
-    /* Step 5: Missing count for character variables using DATA step */
-    %if "&char_vars" ne "" %then %do;
-        data char_fill;
-            set &data end=last;
-            array chars {*} $ &char_vars;
-            retain
-                %do i=1 %to %sysfunc(countw(&char_vars));
-                    miss_&sysfunc(scan(&char_vars, &i)) 0
-                %end;
-            ;
-
+    /* Step 2: Calculate missing counts for each character variable */
+    data char_fillrate;
+        set &data end=last;
+        length variable $32 type $9 missing fillrate 8;
+        retain 
             %do i=1 %to %sysfunc(countw(&char_vars));
-                if missing(%scan(&char_vars, &i)) then miss_%scan(&char_vars, &i) + 1;
+                miss_%scan(&char_vars, &i) 0
             %end;
-
-            if last then do;
-                %do i=1 %to %sysfunc(countw(&char_vars));
-                    variable = "%scan(&char_vars, &i)";
-                    type = "Character";
-                    missing = miss_%scan(&char_vars, &i);
-                    fillrate = round((1 - (missing / &total)) * 100, 0.01);
-                    output;
-                %end;
-            end;
-
-            length variable $32 type $9;
-            keep variable type missing fillrate;
-        run;
-    %end;
-
-    /* Step 6: Combine both */
-    data fillrate_result;
-        set 
-            %if %symexist(num_fill) or "&num_vars" ne "" %then %do; num_fill %end;
-            %if %symexist(char_fill) or "&char_vars" ne "" %then %do; char_fill %end;
         ;
+
+        /* Count missing per variable */
+        %do i=1 %to %sysfunc(countw(&char_vars));
+            if missing(%scan(&char_vars, &i)) then miss_%scan(&char_vars, &i) + 1;
+        %end;
+
+        if last then do;
+            %do i=1 %to %sysfunc(countw(&char_vars));
+                variable = "%scan(&char_vars, &i)";
+                type = "Character";
+                missing = miss_%scan(&char_vars, &i);
+                fillrate = round((1 - (missing / &total_obs)) * 100, 0.01);
+                output;
+            %end;
+        end;
+
+        keep variable type missing fillrate;
     run;
 
-    proc print data=fillrate_result noobs label;
+    proc print data=char_fillrate noobs label;
         label variable = "Variable Name"
               type     = "Type"
               missing  = "Missing Count"
               fillrate = "Fill Rate (%)";
-        title "Fill Rate Report for Dataset: &data";
+        title "Character Variable Fill Rate for Dataset: &data";
     run;
 
 %mend;
