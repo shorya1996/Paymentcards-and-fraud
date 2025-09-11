@@ -39,6 +39,18 @@ acct_entropy AS (
   GROUP BY account_no, txn_cnt
 )
 
+-- Create the customer_timing_segments table
+CREATE TABLE IF NOT EXISTS db.customer_timing_segments (
+  account_no STRING,
+  txn_cnt BIGINT,
+  distinct_hours INT,
+  timing_entropy_nats DOUBLE,
+  timing_segment STRING
+)
+PARTITIONED BY (run_date DATE)
+STORED AS PARQUET
+TBLPROPERTIES ('parquet.compress'='SNAPPY');
+
 -- 2) Final segmentation: choose thresholds
 INSERT OVERWRITE TABLE db.customer_timing_segments
 PARTITION (run_date)
