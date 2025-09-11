@@ -1,30 +1,31 @@
+-- 1) Compute timing features + extra signals
 WITH tx_hour AS (
   SELECT
     account_no,
     hour(from_unixtime(unix_timestamp(txn_ts))) AS hr,
-    1 AS one
+    1 AS cnt
   FROM db.txns
   WHERE txn_ts >= date_sub(current_date, 90)
 ),
 
 acct_hour_cnt AS (
   -- counts per hour bucket per account
-  SELECT account_no, hr, SUM(one) AS cnt_hr
+  SELECT account_no, hr, SUM(cnt) AS cnt_hr
   FROM tx_hour
   GROUP BY account_no, hr
 ),
 
 acct_totals AS (
   -- total txns per account in window
-  SELECT account_no, SUM(cnt_hr) AS txn_cnt, COUNT(*) AS distinct_hours
+  SELECT account_no, SUM(cnt_hr) AS txn_cnt
   FROM acct_hour_cnt
   GROUP BY account_no
 ),
 
 acct_entropy_prep AS (
-  -- join to compute p_h = cnt_hr / txn_cnt
+  -- join to compute p_h = cnt_hr / txn_cnt safely
   SELECT ahc.account_no, ahc.hr, ahc.cnt_hr, at.txn_cnt,
-         (CAST(ahc.cnt_hr AS DOUBLE) / NULLIF(at.txn_cnt,0)) AS p_h
+         CASE WHEN at.txn_cnt > 0 THEN CAST(ahc.cnt_hr AS DOUBLE) / at.txn_cnt ELSE 0.0 END AS p_h
   FROM acct_hour_cnt ahc
   JOIN acct_totals at ON ahc.account_no = at.account_no
 ),
@@ -34,37 +35,125 @@ acct_entropy AS (
   SELECT account_no,
          txn_cnt,
          COUNT(*) AS distinct_hours,
-         - SUM( p_h * LN(p_h) ) AS timing_entropy_nats
+         - SUM( CASE WHEN p_h > 0 THEN p_h * LN(p_h) ELSE 0.0 END ) AS timing_entropy_nats
   FROM acct_entropy_prep
   GROUP BY account_no, txn_cnt
+),
+
+-- top3 hour share: share of transactions in the top 3 hours for the account
+top3_hour_share_cte AS (
+  SELECT account_no,
+         CAST(SUM(cnt_hr) AS DOUBLE) / NULLIF(SUM(cnt_hr) OVER (PARTITION BY account_no),1) AS top3_hour_share
+  FROM (
+    SELECT account_no, hr, cnt_hr,
+           ROW_NUMBER() OVER (PARTITION BY account_no ORDER BY cnt_hr DESC) as rn
+    FROM acct_hour_cnt
+  ) t
+  WHERE rn <= 3
+  GROUP BY account_no
+),
+
+-- top1 MCC share: dominant merchant category share
+top1_mcc_cte AS (
+  SELECT account_no,
+         CAST(MAX(cnt_mcc) AS DOUBLE) / NULLIF(SUM(cnt_mcc) OVER (PARTITION BY account_no),1) AS top1_mcc_share
+  FROM (
+    SELECT account_no, mcc, COUNT(*) AS cnt_mcc
+    FROM db.txns
+    WHERE txn_ts >= date_sub(current_date,90)
+    GROUP BY account_no, mcc
+  ) am
+  GROUP BY account_no
+),
+
+-- interarrival stddev: variation in time gaps between transactions
+interarrival_cte AS (
+  SELECT account_no,
+         SQRT( CASE WHEN cnt_gaps > 1
+                    THEN (sum_sq - (sum_gap*sum_gap)/cnt_gaps) / NULLIF((cnt_gaps-1),0)
+                    ELSE 0 END ) AS interarrival_std_seconds
+  FROM (
+    SELECT account_no,
+           COUNT(1) as cnt_gaps,
+           SUM(delta_sec) as sum_gap,
+           SUM(delta_sec*delta_sec) as sum_sq
+    FROM (
+      SELECT account_no,
+             unix_timestamp(txn_ts) as unix_ts,
+             unix_timestamp(txn_ts) - LAG(unix_timestamp(txn_ts)) OVER (
+               PARTITION BY account_no ORDER BY unix_timestamp(txn_ts)
+             ) as delta_sec
+      FROM db.txns
+      WHERE txn_ts >= date_sub(current_date, 90)
+    ) gaps
+    WHERE delta_sec IS NOT NULL
+    GROUP BY account_no
+  ) s
 )
 
--- Create the customer_timing_segments table
+-- 2) Create the segmentation table (run once)
 CREATE TABLE IF NOT EXISTS db.customer_timing_segments (
   account_no STRING,
   txn_cnt BIGINT,
   distinct_hours INT,
   timing_entropy_nats DOUBLE,
+  top3_hour_share DOUBLE,
+  top1_mcc_share DOUBLE,
+  interarrival_std_seconds DOUBLE,
   timing_segment STRING
 )
 PARTITIONED BY (run_date DATE)
 STORED AS PARQUET
 TBLPROPERTIES ('parquet.compress'='SNAPPY');
 
--- 2) Final segmentation: choose thresholds
+-- 3) Insert today’s snapshot
 INSERT OVERWRITE TABLE db.customer_timing_segments
 PARTITION (run_date)
 SELECT
   a.account_no,
-  current_date() AS run_date,
   a.txn_cnt,
   a.distinct_hours,
   COALESCE(a.timing_entropy_nats, 0.0) AS timing_entropy_nats,
+  COALESCE(th.top3_hour_share, 0.0)    AS top3_hour_share,
+  COALESCE(mm.top1_mcc_share, 0.0)     AS top1_mcc_share,
+  COALESCE(i.interarrival_std_seconds, 0.0) AS interarrival_std_seconds,
   CASE
-    WHEN a.txn_cnt < 5 THEN 'Sparse'                          -- not enough data to classify reliably
-    WHEN a.distinct_hours <= 3 THEN 'Highly_Regular'
-    WHEN a.distinct_hours <= 8 THEN 'Moderately_Regular'
-    WHEN a.timing_entropy_nats <= 1.5 THEN 'Moderately_Regular' -- fallback on entropy if hours borderline
-    ELSE 'Irregular'
-  END AS timing_segment
-FROM acct_entropy a;
+    WHEN a.txn_cnt < 5 THEN 'Sparse'
+
+    -- Suspicious: very low entropy AND (very high concentration OR dominant MCC OR scripted timing)
+    WHEN a.timing_entropy_nats <= 0.25
+         AND (
+              COALESCE(th.top3_hour_share,0) >= 0.70
+           OR COALESCE(mm.top1_mcc_share,0) >= 0.90
+           OR COALESCE(i.interarrival_std_seconds,999999) < 60
+         )
+    THEN 'Suspiciously_Regular'
+
+    -- Highly regular: few hours, entropy not tiny, no dominant merchant
+    WHEN a.distinct_hours <= 3
+         AND a.timing_entropy_nats > 0.25
+         AND COALESCE(mm.top1_mcc_share,0) < 0.85
+    THEN 'Highly_Regular'
+
+    -- Moderately regular: broadened bucket (normal humans)
+    WHEN a.distinct_hours <= 12 OR a.timing_entropy_nats <= 1.5 THEN 'Moderately_Regular'
+
+    -- Diffuse users: many hours, high entropy, not merchant-dominated
+    WHEN a.distinct_hours > 12
+         AND a.timing_entropy_nats > 1.8
+         AND COALESCE(mm.top1_mcc_share,0) <= 0.8
+    THEN 'Diffuse_Regular'
+
+    -- Chaotic: many hours but still merchant-dominated or low entropy
+    WHEN a.distinct_hours > 12
+         AND (COALESCE(mm.top1_mcc_share,0) > 0.8 OR a.timing_entropy_nats <= 1.8)
+    THEN 'Chaotic'
+
+    ELSE 'Moderately_Regular'
+  END AS timing_segment,
+  current_date() AS run_date
+FROM acct_entropy a
+LEFT JOIN top3_hour_share_cte th ON a.account_no = th.account_no
+LEFT JOIN top1_mcc_cte mm ON a.account_no = mm.account_no
+LEFT JOIN interarrival_cte i ON a.account_no = i.account_no
+;
