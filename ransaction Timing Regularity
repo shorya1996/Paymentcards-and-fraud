@@ -1,5 +1,9 @@
--- 1) Compute timing features + extra signals
-WITH tx_hour AS (
+-- ========== FULL FIXED QUERY ==========
+
+-- 1) Base timing CTEs + extra signal CTEs
+WITH
+-- per-transaction hour
+tx_hour AS (
   SELECT
     account_no,
     hour(from_unixtime(unix_timestamp(txn_ts))) AS hr,
@@ -8,90 +12,119 @@ WITH tx_hour AS (
   WHERE txn_ts >= date_sub(current_date, 90)
 ),
 
+-- counts per hour per account
 acct_hour_cnt AS (
-  -- counts per hour bucket per account
   SELECT account_no, hr, SUM(cnt) AS cnt_hr
   FROM tx_hour
   GROUP BY account_no, hr
 ),
 
+-- total transactions per account (sum of cnt_hr)
 acct_totals AS (
-  -- total txns per account in window
   SELECT account_no, SUM(cnt_hr) AS txn_cnt
   FROM acct_hour_cnt
   GROUP BY account_no
 ),
 
+-- prepare p_h = cnt_hr / txn_cnt
 acct_entropy_prep AS (
-  -- join to compute p_h = cnt_hr / txn_cnt safely
   SELECT ahc.account_no, ahc.hr, ahc.cnt_hr, at.txn_cnt,
          CASE WHEN at.txn_cnt > 0 THEN CAST(ahc.cnt_hr AS DOUBLE) / at.txn_cnt ELSE 0.0 END AS p_h
   FROM acct_hour_cnt ahc
   JOIN acct_totals at ON ahc.account_no = at.account_no
 ),
 
+-- entropy per account
 acct_entropy AS (
-  -- entropy = - sum(p_h * ln(p_h))  (natural log; units = nats)
   SELECT account_no,
          txn_cnt,
          COUNT(*) AS distinct_hours,
-         - SUM( CASE WHEN p_h > 0 THEN p_h * LN(p_h) ELSE 0.0 END ) AS timing_entropy_nats
+         - SUM(CASE WHEN p_h > 0 THEN p_h * LN(p_h) ELSE 0.0 END) AS timing_entropy_nats
   FROM acct_entropy_prep
   GROUP BY account_no, txn_cnt
 ),
 
--- top3 hour share: share of transactions in the top 3 hours for the account
-top3_hour_share_cte AS (
-  SELECT account_no,
-         CAST(SUM(cnt_hr) AS DOUBLE) / NULLIF(SUM(cnt_hr) OVER (PARTITION BY account_no),1) AS top3_hour_share
-  FROM (
-    SELECT account_no, hr, cnt_hr,
-           ROW_NUMBER() OVER (PARTITION BY account_no ORDER BY cnt_hr DESC) as rn
-    FROM acct_hour_cnt
-  ) t
+-- TOP-3 HOURS SHARE: rank hours per account, keep top 3, sum their counts / total
+acct_hour_ranked AS (
+  SELECT account_no, hr, cnt_hr,
+         ROW_NUMBER() OVER (PARTITION BY account_no ORDER BY cnt_hr DESC) AS rn
+  FROM acct_hour_cnt
+),
+
+top3_hour_agg AS (
+  SELECT account_no, SUM(cnt_hr) AS top3_cnt
+  FROM acct_hour_ranked
   WHERE rn <= 3
   GROUP BY account_no
 ),
 
--- top1 MCC share: dominant merchant category share
-top1_mcc_cte AS (
-  SELECT account_no,
-         CAST(MAX(cnt_mcc) AS DOUBLE) / NULLIF(SUM(cnt_mcc) OVER (PARTITION BY account_no),1) AS top1_mcc_share
-  FROM (
-    SELECT account_no, mcc, COUNT(*) AS cnt_mcc
-    FROM db.txns
-    WHERE txn_ts >= date_sub(current_date,90)
-    GROUP BY account_no, mcc
-  ) am
+top3_hour_share_cte AS (
+  SELECT t.account_no,
+         CAST(t.top3_cnt AS DOUBLE) / NULLIF(at.txn_cnt,0) AS top3_hour_share
+  FROM top3_hour_agg t
+  JOIN acct_totals at ON t.account_no = at.account_no
+),
+
+-- TOP-1 MCC SHARE: compute count per (account,mcc), then top1 / total
+acct_mcc_cnt AS (
+  SELECT account_no, mcc, COUNT(*) AS cnt_mcc
+  FROM db.txns
+  WHERE txn_ts >= date_sub(current_date, 90)
+  GROUP BY account_no, mcc
+),
+
+acct_mcc_ranked AS (
+  SELECT account_no, mcc, cnt_mcc,
+         ROW_NUMBER() OVER (PARTITION BY account_no ORDER BY cnt_mcc DESC) as rn
+  FROM acct_mcc_cnt
+),
+
+acct_mcc_totals AS (
+  SELECT account_no, SUM(cnt_mcc) AS total_mcc_cnt
+  FROM acct_mcc_cnt
   GROUP BY account_no
 ),
 
--- interarrival stddev: variation in time gaps between transactions
+top1_mcc_cte AS (
+  SELECT r.account_no,
+         CAST(r.cnt_mcc AS DOUBLE) / NULLIF(m.total_mcc_cnt,0) AS top1_mcc_share
+  FROM acct_mcc_ranked r
+  JOIN acct_mcc_totals m ON r.account_no = m.account_no
+  WHERE r.rn = 1
+),
+
+-- INTERARRIVAL STD: compute per-account stddev of gaps (seconds)
+acct_ts_with_lag AS (
+  SELECT account_no,
+         unix_timestamp(txn_ts) AS unix_ts,
+         LAG(unix_timestamp(txn_ts)) OVER (PARTITION BY account_no ORDER BY unix_timestamp(txn_ts)) AS prev_ts
+  FROM db.txns
+  WHERE txn_ts >= date_sub(current_date, 90)
+),
+acct_gaps AS (
+  SELECT account_no,
+         (unix_ts - prev_ts) AS delta_sec
+  FROM acct_ts_with_lag
+  WHERE prev_ts IS NOT NULL
+),
+acct_gaps_agg AS (
+  SELECT account_no,
+         COUNT(delta_sec) AS cnt_gaps,
+         SUM(delta_sec) AS sum_gap,
+         SUM(delta_sec * delta_sec) AS sum_sq
+  FROM acct_gaps
+  GROUP BY account_no
+),
 interarrival_cte AS (
   SELECT account_no,
-         SQRT( CASE WHEN cnt_gaps > 1
-                    THEN (sum_sq - (sum_gap*sum_gap)/cnt_gaps) / NULLIF((cnt_gaps-1),0)
-                    ELSE 0 END ) AS interarrival_std_seconds
-  FROM (
-    SELECT account_no,
-           COUNT(1) as cnt_gaps,
-           SUM(delta_sec) as sum_gap,
-           SUM(delta_sec*delta_sec) as sum_sq
-    FROM (
-      SELECT account_no,
-             unix_timestamp(txn_ts) as unix_ts,
-             unix_timestamp(txn_ts) - LAG(unix_timestamp(txn_ts)) OVER (
-               PARTITION BY account_no ORDER BY unix_timestamp(txn_ts)
-             ) as delta_sec
-      FROM db.txns
-      WHERE txn_ts >= date_sub(current_date, 90)
-    ) gaps
-    WHERE delta_sec IS NOT NULL
-    GROUP BY account_no
-  ) s
+         CASE WHEN cnt_gaps > 1
+              THEN SQRT( (sum_sq - (sum_gap * sum_gap) / cnt_gaps) / NULLIF(cnt_gaps - 1,0) )
+              ELSE 0.0
+         END AS interarrival_std_seconds
+  FROM acct_gaps_agg
 )
 
--- 2) Create the segmentation table (run once)
+-- 2) Create segmentation table (run once)
 CREATE TABLE IF NOT EXISTS db.customer_timing_segments (
   account_no STRING,
   txn_cnt BIGINT,
@@ -106,7 +139,7 @@ PARTITIONED BY (run_date DATE)
 STORED AS PARQUET
 TBLPROPERTIES ('parquet.compress'='SNAPPY');
 
--- 3) Insert today’s snapshot
+-- 3) Insert today's snapshot (overwrite partition)
 INSERT OVERWRITE TABLE db.customer_timing_segments
 PARTITION (run_date)
 SELECT
@@ -114,46 +147,39 @@ SELECT
   a.txn_cnt,
   a.distinct_hours,
   COALESCE(a.timing_entropy_nats, 0.0) AS timing_entropy_nats,
-  COALESCE(th.top3_hour_share, 0.0)    AS top3_hour_share,
-  COALESCE(mm.top1_mcc_share, 0.0)     AS top1_mcc_share,
+  COALESCE(t3.top3_hour_share, 0.0) AS top3_hour_share,
+  COALESCE(m1.top1_mcc_share, 0.0) AS top1_mcc_share,
   COALESCE(i.interarrival_std_seconds, 0.0) AS interarrival_std_seconds,
   CASE
     WHEN a.txn_cnt < 5 THEN 'Sparse'
 
-    -- Suspicious: very low entropy AND (very high concentration OR dominant MCC OR scripted timing)
     WHEN a.timing_entropy_nats <= 0.25
-         AND (
-              COALESCE(th.top3_hour_share,0) >= 0.70
-           OR COALESCE(mm.top1_mcc_share,0) >= 0.90
-           OR COALESCE(i.interarrival_std_seconds,999999) < 60
-         )
-    THEN 'Suspiciously_Regular'
+         AND ( COALESCE(t3.top3_hour_share,0) >= 0.70
+             OR COALESCE(m1.top1_mcc_share,0) >= 0.90
+             OR COALESCE(i.interarrival_std_seconds,999999) < 60 )
+      THEN 'Suspiciously_Regular'
 
-    -- Highly regular: few hours, entropy not tiny, no dominant merchant
     WHEN a.distinct_hours <= 3
          AND a.timing_entropy_nats > 0.25
-         AND COALESCE(mm.top1_mcc_share,0) < 0.85
-    THEN 'Highly_Regular'
+         AND COALESCE(m1.top1_mcc_share,0) < 0.85
+      THEN 'Highly_Regular'
 
-    -- Moderately regular: broadened bucket (normal humans)
     WHEN a.distinct_hours <= 12 OR a.timing_entropy_nats <= 1.5 THEN 'Moderately_Regular'
 
-    -- Diffuse users: many hours, high entropy, not merchant-dominated
     WHEN a.distinct_hours > 12
          AND a.timing_entropy_nats > 1.8
-         AND COALESCE(mm.top1_mcc_share,0) <= 0.8
-    THEN 'Diffuse_Regular'
+         AND COALESCE(m1.top1_mcc_share,0) <= 0.8
+      THEN 'Diffuse_Regular'
 
-    -- Chaotic: many hours but still merchant-dominated or low entropy
     WHEN a.distinct_hours > 12
-         AND (COALESCE(mm.top1_mcc_share,0) > 0.8 OR a.timing_entropy_nats <= 1.8)
-    THEN 'Chaotic'
+         AND ( COALESCE(m1.top1_mcc_share,0) > 0.8 OR a.timing_entropy_nats <= 1.8)
+      THEN 'Chaotic'
 
     ELSE 'Moderately_Regular'
   END AS timing_segment,
   current_date() AS run_date
 FROM acct_entropy a
-LEFT JOIN top3_hour_share_cte th ON a.account_no = th.account_no
-LEFT JOIN top1_mcc_cte mm ON a.account_no = mm.account_no
+LEFT JOIN top3_hour_share_cte t3 ON a.account_no = t3.account_no
+LEFT JOIN top1_mcc_cte m1 ON a.account_no = m1.account_no
 LEFT JOIN interarrival_cte i ON a.account_no = i.account_no
 ;
