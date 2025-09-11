@@ -1,0 +1,58 @@
+WITH tx_hour AS (
+  SELECT
+    account_no,
+    hour(from_unixtime(unix_timestamp(txn_ts))) AS hr,
+    1 AS one
+  FROM db.txns
+  WHERE txn_ts >= date_sub(current_date, 90)
+),
+
+acct_hour_cnt AS (
+  -- counts per hour bucket per account
+  SELECT account_no, hr, SUM(one) AS cnt_hr
+  FROM tx_hour
+  GROUP BY account_no, hr
+),
+
+acct_totals AS (
+  -- total txns per account in window
+  SELECT account_no, SUM(cnt_hr) AS txn_cnt, COUNT(*) AS distinct_hours
+  FROM acct_hour_cnt
+  GROUP BY account_no
+),
+
+acct_entropy_prep AS (
+  -- join to compute p_h = cnt_hr / txn_cnt
+  SELECT ahc.account_no, ahc.hr, ahc.cnt_hr, at.txn_cnt,
+         (CAST(ahc.cnt_hr AS DOUBLE) / NULLIF(at.txn_cnt,0)) AS p_h
+  FROM acct_hour_cnt ahc
+  JOIN acct_totals at ON ahc.account_no = at.account_no
+),
+
+acct_entropy AS (
+  -- entropy = - sum(p_h * ln(p_h))  (natural log; units = nats)
+  SELECT account_no,
+         txn_cnt,
+         COUNT(*) AS distinct_hours,
+         - SUM( p_h * LN(p_h) ) AS timing_entropy_nats
+  FROM acct_entropy_prep
+  GROUP BY account_no, txn_cnt
+)
+
+-- 2) Final segmentation: choose thresholds
+INSERT OVERWRITE TABLE db.customer_timing_segments
+PARTITION (run_date)
+SELECT
+  a.account_no,
+  current_date() AS run_date,
+  a.txn_cnt,
+  a.distinct_hours,
+  COALESCE(a.timing_entropy_nats, 0.0) AS timing_entropy_nats,
+  CASE
+    WHEN a.txn_cnt < 5 THEN 'Sparse'                          -- not enough data to classify reliably
+    WHEN a.distinct_hours <= 3 THEN 'Highly_Regular'
+    WHEN a.distinct_hours <= 8 THEN 'Moderately_Regular'
+    WHEN a.timing_entropy_nats <= 1.5 THEN 'Moderately_Regular' -- fallback on entropy if hours borderline
+    ELSE 'Irregular'
+  END AS timing_segment
+FROM acct_entropy a;
