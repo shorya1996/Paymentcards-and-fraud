@@ -1,0 +1,59 @@
+/* Step 1: Calculate total and decline count per transaction_type in each table */
+proc sql;
+    create table decline_rate_1 as
+    select 
+        transaction_type,
+        date,
+        hour,
+        sum(case when upcase(decision) = 'DECLINE' then 1 else 0 end) as decline_count_1,
+        count(*) as total_txn_1,
+        calculated decline_count_1 / calculated total_txn_1 as decline_rate_1
+    from table1
+    group by transaction_type, date, hour;
+quit;
+
+proc sql;
+    create table decline_rate_2 as
+    select 
+        transaction_type,
+        date,
+        hour,
+        sum(case when upcase(decision) = 'DECLINE' then 1 else 0 end) as decline_count_2,
+        count(*) as total_txn_2,
+        calculated decline_count_2 / calculated total_txn_2 as decline_rate_2
+    from table2
+    group by transaction_type, date, hour;
+quit;
+
+/* Step 2: Combine both results for side-by-side comparison */
+proc sql;
+    create table decline_rate_compare as
+    select 
+        coalesce(a.transaction_type, b.transaction_type) as transaction_type,
+        coalesce(a.date, b.date) as date,
+        coalesce(a.hour, b.hour) as hour,
+        
+        /* Table 1 stats */
+        a.total_txn_1,
+        a.decline_count_1,
+        a.decline_rate_1 format=percent8.2,
+        
+        /* Table 2 stats */
+        b.total_txn_2,
+        b.decline_count_2,
+        b.decline_rate_2 format=percent8.2,
+        
+        /* Difference */
+        (b.decline_rate_2 - a.decline_rate_1) as rate_diff format=percent8.2
+    from decline_rate_1 as a
+    full join decline_rate_2 as b
+    on a.transaction_type = b.transaction_type
+       and a.date = b.date
+       and a.hour = b.hour
+    order by transaction_type, date, hour;
+quit;
+
+/* Step 3: View results */
+proc print data=decline_rate_compare noobs;
+    title "Decline Rate Comparison Between Table1 and Table2";
+run;
