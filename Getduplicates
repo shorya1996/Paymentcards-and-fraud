@@ -1,0 +1,68 @@
+WITH base AS (
+  SELECT
+    cmx_tran_id,
+    rqo_tran_date,
+    rqo_tran_time,
+    hqo_card_num,
+    substr(hqo_card_num,1,6)                  AS bin,
+    substr(hqo_card_num, length(hqo_card_num)-3, 4)  AS last_4,  -- safer last4 extraction
+    hct_term_owner_id                          AS merchant_id,
+    tca_client_amt                             AS amount,
+    -- build a proper timestamp and epoch seconds (adjust format if needed)
+    unix_timestamp(concat(rqo_tran_date,' ', rqo_tran_time), 'yyyy-MM-dd HH:mm:ss') AS ts
+  FROM hulcdebt.fcm_csca
+  WHERE asofdate = '2025-10-10'
+    AND trim(hct_term_id) IN ('SPF0','SPF1','SPF2','SPF3','TRUSTED','0000CK00','0000CK01')  -- keep your filter
+)
+
+-- duplicates_with_mid: count transactions that have at least one different txn matching the criteria
+WITH base AS ( ... )  -- paste the base CTE from above here
+SELECT
+  total_txns,
+  dup_txns,
+  round((dup_txns / total_txns) * 100, 4) AS pct_txns_with_duplicate_matches
+FROM (
+  SELECT
+    COUNT(*) AS total_txns,
+    SUM(CASE WHEN has_match = 1 THEN 1 ELSE 0 END) AS dup_txns
+  FROM (
+    -- mark each transaction whether it has >=1 match
+    SELECT b1.cmx_tran_id,
+           CASE WHEN EXISTS (
+             SELECT 1
+             FROM base b2
+             WHERE b2.cmx_tran_id != b1.cmx_tran_id
+               AND b2.bin = b1.bin
+               AND b2.last_4 = b1.last_4
+               AND b2.amount = b1.amount
+               AND b2.merchant_id = b1.merchant_id
+               AND abs(b2.ts - b1.ts) <= 8
+           ) THEN 1 ELSE 0 END AS has_match
+    FROM base b1
+  ) t
+) summary;
+
+
+WITH base AS ( ... )  -- same base CTE
+SELECT
+  total_txns,
+  dup_txns,
+  round((dup_txns / total_txns) * 100, 4) AS pct_txns_with_duplicate_matches_no_mid
+FROM (
+  SELECT
+    COUNT(*) AS total_txns,
+    SUM(CASE WHEN has_match = 1 THEN 1 ELSE 0 END) AS dup_txns
+  FROM (
+    SELECT b1.cmx_tran_id,
+           CASE WHEN EXISTS (
+             SELECT 1
+             FROM base b2
+             WHERE b2.cmx_tran_id != b1.cmx_tran_id
+               AND b2.bin = b1.bin
+               AND b2.last_4 = b1.last_4
+               AND b2.amount = b1.amount
+               AND abs(b2.ts - b1.ts) <= 8
+           ) THEN 1 ELSE 0 END AS has_match
+    FROM base b1
+  ) t
+) summary;
