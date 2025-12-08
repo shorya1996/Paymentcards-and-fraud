@@ -1,0 +1,319 @@
+/**************************************************************************
+ * SAS + ODBC -> Hive dynamic binning and IV/WOE/KS pipeline
+ * Usage: update the connection details and variable list; run in SAS.
+ **************************************************************************/
+
+/* ======= CONFIG ======= */
+%let odbc_dsn = HIVE_ODBC_DSN;          /* replace with your ODBC DSN */
+%let odbc_user = ;                      /* optionally, user */
+%let odbc_pw   = ;                      /* optionally, pw */
+%let hive_schema = default;             /* schema if needed */
+%let hive_table  = fcm_csca;            /* source table in Hive */
+%let fraud_col   = fraud_flag;          /* fraud column (0/1) */
+%let sample_frac = 0.0001;              /* fraction for non-fraud sampling (adjust) */
+%let min_cat_unique = 40;               /* <= treated as categorical */
+%let ntile_bins = 10;                   /* default # bins for continuous */
+%let min_bin_support = 50;              /* ignore bins with fewer than this support */
+%let rare_cat_pct = 0.01;               /* cat values under 1% -> OTHER */
+
+/* ======= Step A: Create balanced sample in Hive via ODBC pass-through ======= */
+/* Keep all fraud rows; sample non-fraud rows approximately by RAND() filter */
+proc sql;
+  connect to odbc (dsn="&odbc_dsn." user="&odbc_user." password="&odbc_pw.");
+  execute(
+    DROP TABLE IF EXISTS tmp_sample_balanced
+  ) by odbc;
+  execute(
+    CREATE TABLE tmp_sample_nonfraud AS
+    SELECT * FROM &hive_schema..&hive_table
+    WHERE &fraud_col = 0
+    AND rand() < &sample_frac
+  ) by odbc;
+  execute(
+    CREATE TABLE tmp_sample_fraud AS
+    SELECT * FROM &hive_schema..&hive_table
+    WHERE &fraud_col = 1
+  ) by odbc;
+  execute(
+    CREATE TABLE tmp_sample_balanced AS
+    SELECT * FROM tmp_sample_fraud
+    UNION ALL
+    SELECT * FROM tmp_sample_nonfraud
+  ) by odbc;
+  disconnect from odbc;
+quit;
+
+/* ======= Step B: Pull sample into SAS (small) ======= */
+libname hiveodbc odbc dsn="&odbc_dsn." user="&odbc_user." password="&odbc_pw.";
+/* read the sample into a SAS dataset */
+data sample_balanced;
+  set hiveodbc.tmp_sample_balanced;
+run;
+
+/* If sample is still large, you can downsample further here */
+
+/* ======= Helper: Provide list of variables to analyze ======= */
+/* Option 1: create a dataset vars_to_analyze with your 60 variables */
+/* Option 2: auto-generate from sample balanced excluding known cols */
+/* I implement option 2 here and you can override by creating vars_to_analyze dataset */
+
+%macro build_var_list(exclude=);
+  proc sql noprint;
+    /* get all columns from sample dataset */
+    select name into :_allcols separated by ' '
+    from dictionary.columns
+    where libname='WORK' and memname='SAMPLE_BALANCED';
+  quit;
+  %let exclude = &exclude. &fraud_col.;
+  %let var_cnt = 0;
+  %let var_list = ;
+  %do i=1 %to %sysfunc(countw(&_allcols.));
+    %let col = %scan(&_allcols., &i.);
+    %if %index(%upcase(&exclude.), %upcase(&col.)) = 0 %then %do;
+      %let var_cnt = %eval(&var_cnt + 1);
+      %let var_list = &var_list &col.;
+    %end;
+  %end;
+  %put NOTE: Variables to analyze (&var_cnt): &var_list;
+  /* write into dataset vars_to_analyze */
+  data vars_to_analyze;
+    length varname $128;
+    %do i=1 %to %sysfunc(countw(&var_list));
+      varname = "%scan(&var_list, &i)";
+      output;
+    %end;
+  run;
+%mend build_var_list;
+
+%build_var_list(exclude=account_id txn_dt txn_time amount); /* edit exclude as needed */
+
+/* ======= Macro: analyze one variable ======= */
+%macro analyze_var(var=);
+
+  %put NOTE: Starting analysis for variable =&var;
+
+  /* 1) distinct count to determine type */
+  proc sql noprint;
+    select count(distinct &var) into :nuniq
+    from sample_balanced;
+    select count(*) into :sample_n from sample_balanced;
+  quit;
+
+  %put NOTE: Distinct count for &var = &nuniq, sample size=&sample_n;
+
+  %if &nuniq <= &min_cat_unique %then %do;
+    %let vartype = categorical;
+  %end;
+  %else %do;
+    %let vartype = continuous;
+  %end;
+
+  /* Prepare a working dataset with bin column var_bin */
+  %if &vartype = continuous %then %do;
+    /* compute quantiles in PROC UNIVARIATE (approx) */
+    proc sql;
+      create table _quant as
+      select &var from sample_balanced where &var is not null;
+    quit;
+
+    ods select none;
+    proc univariate data=_quant noprint;
+      var &var;
+      output out=_pct pctlpts 10 20 30 40 50 60 70 80 90 pctlpre=p_;
+    run;
+    ods select all;
+
+    /* read percentile thresholds into macro vars */
+    data _null_;
+      set _pct;
+      array p[9] p_10-p_90;
+      call symputx('q1', p[1]);
+      call symputx('q2', p[2]);
+      call symputx('q3', p[3]);
+      call symputx('q4', p[4]);
+      call symputx('q5', p[5]);
+      call symputx('q6', p[6]);
+      call symputx('q7', p[7]);
+      call symputx('q8', p[8]);
+      call symputx('q9', p[9]);
+    run;
+
+    /* create bins using thresholds (NULL->bin -1) */
+    data binned_&var.;
+      set sample_balanced;
+      length var_bin 8;
+      if &var = . then var_bin = -1;
+      else if &var <= &q1 then var_bin = 1;
+      else if &var <= &q2 then var_bin = 2;
+      else if &var <= &q3 then var_bin = 3;
+      else if &var <= &q4 then var_bin = 4;
+      else if &var <= &q5 then var_bin = 5;
+      else if &var <= &q6 then var_bin = 6;
+      else if &var <= &q7 then var_bin = 7;
+      else if &var <= &q8 then var_bin = 8;
+      else if &var <= &q9 then var_bin = 9;
+      else var_bin = 10;
+    run;
+
+  %end;
+  %else %do; /* categorical */
+    /* build frequency table and label low-frequency as OTHER */
+    proc sql;
+      create table _freq as
+      select &var as cat, count(*) as cnt, sum(&fraud_col) as fraud_cnt
+      from sample_balanced
+      group by &var;
+      select sum(cnt) into :_tot from _freq;
+    quit;
+
+    data _freq2;
+      set _freq;
+      pct = cnt / &_tot;
+      if pct < &rare_cat_pct then cat_grp='__OTHER__';
+      else if cat = . then cat_grp='__NULL__';
+      else cat_grp=cats(cat);
+    run;
+
+    proc sql;
+      create table binned_&var. as
+      select a.*, coalesce(b.cat_grp,'__OTHER__') as var_bin
+      from sample_balanced a
+      left join _freq2 b
+      on (a.&var = b.cat)
+      ;
+    quit;
+
+  %end;
+
+  /* ====== Compute bin-level metrics: total_cnt, fraud_cnt, fraud_rate, entropy ====== */
+  proc sql;
+    create table metrics_&var. as
+    select var_bin,
+           count(*) as total_cnt,
+           sum(&fraud_col) as fraud_cnt,
+           calculated fraud_cnt / calculated total_cnt as fraud_rate
+    from binned_&var.
+    group by var_bin
+    having calculated total_cnt >= &min_bin_support
+    order by fraud_rate desc;
+  quit;
+
+  /* entropy (binary) */
+  data metrics_&var.;
+    set metrics_&var.;
+    if fraud_cnt = 0 or fraud_cnt = total_cnt then entropy = 0;
+    else do;
+      p = fraud_cnt/total_cnt;
+      entropy = -( p*log(p) + (1-p)*log(1-p) );
+    end;
+    drop p;
+  run;
+
+  /* ====== WOE & IV ====== */
+  proc sql noprint;
+    select sum(&fraud_col) into :total_bad from sample_balanced;
+    select sum(1 - &fraud_col) into :total_good from sample_balanced;
+  quit;
+
+  data woe_&var.;
+    set metrics_&var.;
+    good_cnt = total_cnt - fraud_cnt;
+    /* smoothing to avoid zero division */
+    good_pct = (good_cnt + 0.5) / (&total_good + 0.5*count(*));
+    bad_pct = (fraud_cnt + 0.5) / (&total_bad + 0.5*count(*));
+    /* avoid negative or zero in log; check */
+    if bad_pct <= 0 then bad_pct = 1e-9;
+    if good_pct <= 0 then good_pct = 1e-9;
+    woe = log(good_pct / bad_pct);
+    iv_contrib = (good_pct - bad_pct) * woe;
+  run;
+
+  proc sql;
+    select sum(iv_contrib) into :iv_sum from woe_&var.;
+  quit;
+
+  /* ====== KS: cumulative difference across bins ordered by fraud_rate (or var_bin numeric) ====== */
+  proc sort data=metrics_&var. out=_ks; by var_bin; run;
+  data _ks2;
+    set _ks;
+    retain cum_bad cum_good 0;
+    cum_bad + fraud_cnt;
+    cum_good + (total_cnt - fraud_cnt);
+    run;
+  proc sql noprint;
+    select max(abs((cum_bad/&total_bad) - (cum_good/&total_good))) into :ks_val from _ks2;
+  quit;
+
+  /* ====== Save variable-level summary ====== */
+  data var_summary_&var.;
+    length varname $128;
+    varname="&var";
+    vartype="&vartype";
+    iv = &iv_sum;
+    ks = &ks_val;
+    max_fraud = .;
+    /* get max fraud_rate */
+  run;
+
+  proc sql;
+    update var_summary_&var.
+    set max_fraud = (select max(fraud_rate) from metrics_&var.);
+  quit;
+
+  /* write outputs to permanent datasets/tables for later union */
+  /* Append per-var metrics to cumulative tables */
+
+  proc sql;
+    /* create cumulative tables if not exists, then append */
+    create table work.all_metrics_&var. as select * from metrics_&var.;
+    create table work.all_woe_&var. as select * from woe_&var.;
+    create table work.all_var_summary_&var. as select * from var_summary_&var.;
+  quit;
+
+  %put NOTE: Finished analysis for &var (IV=&iv_sum KS=&ks_val);
+%mend analyze_var;
+
+/* ======= Loop through vars_to_analyze and call macro ======= */
+data _null_;
+  set vars_to_analyze;
+  call execute(cats('%analyze_var(var=', strip(varname), ');'));
+run;
+
+/* ======= After loop: collect all summaries into single tables ======= */
+/* (This assumes macros created work.all_var_summary_* etc - we'll union them) */
+proc sql noprint;
+  select memname into :mems separated by ' ' from dictionary.tables
+  where libname='WORK' and upcase(memname) like 'ALL_VAR_SUMMARY_%';
+quit;
+
+%macro union_summaries;
+  data var_metrics_summary;
+    length varname $128 vartype $12;
+    %let n=1;
+    %do %while (%scan(&mems, &n) ne );
+      %let m=%scan(&mems, &n);
+      set work.&m.;
+      output;
+      %let n=%eval(&n+1);
+    %end;
+  run;
+%mend union_summaries;
+
+%union_summaries;
+
+/* ======= Push final summary back to Hive (so analysts using only Hive can inspect) ======= */
+proc sql;
+  connect to odbc (dsn="&odbc_dsn." user="&odbc_user." password="&odbc_pw.");
+  /* create target table in Hive schema; adjust for existence */
+  execute( DROP TABLE IF EXISTS &hive_schema..var_metrics_summary ) by odbc;
+  disconnect from odbc;
+quit;
+
+/* Use LIBNAME to write back to Hive */
+libname hiveout odbc dsn="&odbc_dsn." user="&odbc_user." password="&odbc_pw.";
+data hiveout.var_metrics_summary;
+  set var_metrics_summary;
+run;
+libname hiveout clear;
+
+/* Clean up work tables if desired */
