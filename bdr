@@ -1,0 +1,108 @@
+proc sql;
+    create table acct_max_bdr as
+    select
+        AcctNbr,
+        max(datepart(ClaimCreationDate)) as max_bdr_date format=date9.
+    from credit_BDR
+    group by AcctNbr;
+quit;
+
+
+proc sql;
+    create table acct_dispute_features as
+    select
+        d.AcctNbr,
+        b.max_bdr_date,
+
+        /* Lifetime */
+        count(*) as disputes_ever,
+
+        sum(case when d.ClaimStatus = 'PAID' then 1 else 0 end) as paid_ever,
+        sum(case when d.ClaimStatus = 'REJECTED' then 1 else 0 end) as rejected_ever,
+
+        /* Lookback windows BEFORE last dispute */
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 7
+                 and datepart(d.ClaimCreationDate) <= b.max_bdr_date
+                then 1 else 0
+            end) as disputes_7d,
+
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 30
+                 and datepart(d.ClaimCreationDate) <= b.max_bdr_date
+                then 1 else 0
+            end) as disputes_30d,
+
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 60
+                 and datepart(d.ClaimCreationDate) <= b.max_bdr_date
+                then 1 else 0
+            end) as disputes_60d,
+
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 90
+                 and datepart(d.ClaimCreationDate) <= b.max_bdr_date
+                then 1 else 0
+            end) as disputes_90d,
+
+        /* Paid / Rejected in last 30 days (example – extend if needed) */
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 30
+                 and d.ClaimStatus = 'PAID'
+                then 1 else 0
+            end) as paid_30d,
+
+        sum(case 
+                when datepart(d.ClaimCreationDate) >= b.max_bdr_date - 30
+                 and d.ClaimStatus = 'REJECTED'
+                then 1 else 0
+            end) as rejected_30d
+
+    from credit_BDR d
+    inner join acct_max_bdr b
+        on d.AcctNbr = b.AcctNbr
+    group by d.AcctNbr, b.max_bdr_date;
+quit;
+
+proc sql;
+    create table acct_txn_features as
+    select
+        t.Account_number as AcctNbr,
+
+        /* Transactions BEFORE dispute */
+        sum(case 
+                when datepart(t.Transaction_date) < b.max_bdr_date
+                then 1 else 0
+            end) as txn_before_bdr,
+
+        /* Transactions AFTER dispute */
+        sum(case 
+                when datepart(t.Transaction_date) > b.max_bdr_date
+                 and datepart(t.Transaction_date) <= b.max_bdr_date + 7
+                then 1 else 0
+            end) as txn_after_7d,
+
+        sum(case 
+                when datepart(t.Transaction_date) > b.max_bdr_date
+                 and datepart(t.Transaction_date) <= b.max_bdr_date + 30
+                then 1 else 0
+            end) as txn_after_30d,
+
+        sum(case 
+                when datepart(t.Transaction_date) > b.max_bdr_date
+                 and datepart(t.Transaction_date) <= b.max_bdr_date + 60
+                then 1 else 0
+            end) as txn_after_60d,
+
+        sum(case 
+                when datepart(t.Transaction_date) > b.max_bdr_date
+                 and datepart(t.Transaction_date) <= b.max_bdr_date + 90
+                then 1 else 0
+            end) as txn_after_90d
+
+    from transaction_table t
+    inner join acct_max_bdr b
+        on t.Account_number = b.AcctNbr
+    group by t.Account_number;
+quit;
+
