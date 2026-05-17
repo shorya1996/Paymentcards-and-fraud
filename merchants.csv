@@ -1,0 +1,301 @@
+merchant_id,merchant_name,mcc,mcc_desc,merchant_country,merchant_state,merchant_city,merchant_size,risk_tier,base_risk_score
+M000000,Acme Electronics 000,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000001,North Star Telecom 001,5812,Restaurants,IN,DL,Jaipur,MID,LOW,0.03
+M000002,City Grocery Hub 002,5999,Misc Retail,IN,RJ,Jaipur,SMALL,MEDIUM,0.05
+M000003,Blue Pine Apparel 003,5732,Electronics,IN,HR,Chennai,LARGE,MEDIUM,0.07
+M000004,Metro Fuel Station 004,4814,Telecom,SG,,,SMALL,MEDIUM,0.05
+M000005,Sunrise Department Store 005,6011,ATMs,IN,WB,Chennai,SMALL,MEDIUM,0.1
+M000006,Golden Lane Jewelry 006,4829,Money Transfer,IN,GJ,Kolkata,MID,HIGH,0.12
+M000007,Prime Direct Media 007,5967,Direct Marketing,US,,,SMALL,HIGH,0.16
+M000008,Rapid Transfer Co 008,7995,Betting/Gambling,CA,,,MID,HIGH,0.2
+M000009,Atlas Gaming 009,5311,Department Stores,CA,,,LARGE,LOW,0.04
+M000010,Orbit Bazaar 010,5944,Jewelry Stores,IN,GJ,Mumbai,MID,MEDIUM,0.1
+M000011,Pioneer Restaurant Group 011,5541,Fuel,IN,MH,Delhi,SMALL,LOW,0.02
+M000012,Nova Retail 012,5691,Apparel,US,,,SMALL,LOW,0.03
+M000013,Apex Mobile Center 013,4821,Wire Transfer,US,,,MID,HIGH,0.14
+M000014,Acme Electronics 014,5411,Grocery Stores,IN,GJ,Delhi,SMALL,LOW,0.02
+M000015,North Star Telecom 015,5812,Restaurants,IN,GJ,Chennai,SMALL,LOW,0.03
+M000016,City Grocery Hub 016,5999,Misc Retail,IN,HR,Ahmedabad,SMALL,MEDIUM,0.05
+M000017,Blue Pine Apparel 017,5732,Electronics,US,,,SMALL,MEDIUM,0.07
+M000018,Metro Fuel Station 018,4814,Telecom,US,,,LARGE,MEDIUM,0.05
+M000019,Sunrise Department Store 019,6011,ATMs,IN,TN,Mumbai,SMALL,MEDIUM,0.1
+M000020,Golden Lane Jewelry 020,4829,Money Transfer,US,,,MID,HIGH,0.12
+M000021,Prime Direct Media 021,5967,Direct Marketing,IN,HR,Mumbai,MID,HIGH,0.16
+M000022,Rapid Transfer Co 022,7995,Betting/Gambling,US,,,MID,HIGH,0.2
+M000023,Atlas Gaming 023,5311,Department Stores,AE,,,MID,LOW,0.04
+M000024,Orbit Bazaar 024,5944,Jewelry Stores,SG,,,SMALL,MEDIUM,0.1
+M000025,Pioneer Restaurant Group 025,5541,Fuel,IN,KA,Mumbai,SMALL,LOW,0.02
+M000026,Nova Retail 026,5691,Apparel,US,,,MID,LOW,0.03
+M000027,Apex Mobile Center 027,4821,Wire Transfer,SG,,,MID,HIGH,0.14
+M000028,Acme Electronics 028,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000029,North Star Telecom 029,5812,Restaurants,US,,,LARGE,LOW,0.03
+M000030,City Grocery Hub 030,5999,Misc Retail,SG,,,MID,MEDIUM,0.05
+M000031,Blue Pine Apparel 031,5732,Electronics,US,,,MID,MEDIUM,0.07
+M000032,Metro Fuel Station 032,4814,Telecom,US,,,MID,MEDIUM,0.05
+M000033,Sunrise Department Store 033,6011,ATMs,IN,HR,Chennai,SMALL,MEDIUM,0.1
+M000034,Golden Lane Jewelry 034,4829,Money Transfer,SG,,,MID,HIGH,0.12
+M000035,Prime Direct Media 035,5967,Direct Marketing,AE,,,SMALL,HIGH,0.16
+M000036,Rapid Transfer Co 036,7995,Betting/Gambling,US,,,MID,HIGH,0.2
+M000037,Atlas Gaming 037,5311,Department Stores,US,,,SMALL,LOW,0.04
+M000038,Orbit Bazaar 038,5944,Jewelry Stores,SG,,,SMALL,MEDIUM,0.1
+M000039,Pioneer Restaurant Group 039,5541,Fuel,US,,,SMALL,LOW,0.02
+M000040,Nova Retail 040,5691,Apparel,IN,WB,Kolkata,MID,LOW,0.03
+M000041,Apex Mobile Center 041,4821,Wire Transfer,IN,HR,Gurugram,MID,HIGH,0.14
+M000042,Acme Electronics 042,5411,Grocery Stores,IN,DL,Kolkata,LARGE,LOW,0.02
+M000043,North Star Telecom 043,5812,Restaurants,IN,GJ,Gurugram,SMALL,LOW,0.03
+M000044,City Grocery Hub 044,5999,Misc Retail,IN,WB,Jaipur,LARGE,MEDIUM,0.05
+M000045,Blue Pine Apparel 045,5732,Electronics,US,,,SMALL,MEDIUM,0.07
+M000046,Metro Fuel Station 046,4814,Telecom,IN,HR,Chennai,MID,MEDIUM,0.05
+M000047,Sunrise Department Store 047,6011,ATMs,SG,,,MID,MEDIUM,0.1
+M000048,Golden Lane Jewelry 048,4829,Money Transfer,SG,,,MID,HIGH,0.12
+M000049,Prime Direct Media 049,5967,Direct Marketing,US,,,LARGE,HIGH,0.16
+M000050,Rapid Transfer Co 050,7995,Betting/Gambling,US,,,SMALL,HIGH,0.2
+M000051,Atlas Gaming 051,5311,Department Stores,US,,,MID,LOW,0.04
+M000052,Orbit Bazaar 052,5944,Jewelry Stores,US,,,SMALL,MEDIUM,0.1
+M000053,Pioneer Restaurant Group 053,5541,Fuel,SG,,,SMALL,LOW,0.02
+M000054,Nova Retail 054,5691,Apparel,US,,,LARGE,LOW,0.03
+M000055,Apex Mobile Center 055,4821,Wire Transfer,CA,,,MID,HIGH,0.14
+M000056,Acme Electronics 056,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000057,North Star Telecom 057,5812,Restaurants,IN,RJ,Delhi,SMALL,LOW,0.03
+M000058,City Grocery Hub 058,5999,Misc Retail,AE,,,SMALL,MEDIUM,0.05
+M000059,Blue Pine Apparel 059,5732,Electronics,IN,MH,Chennai,MID,MEDIUM,0.07
+M000060,Metro Fuel Station 060,4814,Telecom,IN,WB,Bengaluru,LARGE,MEDIUM,0.05
+M000061,Sunrise Department Store 061,6011,ATMs,US,,,LARGE,MEDIUM,0.1
+M000062,Golden Lane Jewelry 062,4829,Money Transfer,IN,DL,Jaipur,SMALL,HIGH,0.12
+M000063,Prime Direct Media 063,5967,Direct Marketing,US,,,MID,HIGH,0.16
+M000064,Rapid Transfer Co 064,7995,Betting/Gambling,IN,HR,Mumbai,MID,HIGH,0.2
+M000065,Atlas Gaming 065,5311,Department Stores,US,,,SMALL,LOW,0.04
+M000066,Orbit Bazaar 066,5944,Jewelry Stores,US,,,MID,MEDIUM,0.1
+M000067,Pioneer Restaurant Group 067,5541,Fuel,US,,,MID,LOW,0.02
+M000068,Nova Retail 068,5691,Apparel,CA,,,LARGE,LOW,0.03
+M000069,Apex Mobile Center 069,4821,Wire Transfer,IN,HR,Bengaluru,LARGE,HIGH,0.14
+M000070,Acme Electronics 070,5411,Grocery Stores,IN,DL,Jaipur,SMALL,LOW,0.02
+M000071,North Star Telecom 071,5812,Restaurants,IN,MH,Chennai,SMALL,LOW,0.03
+M000072,City Grocery Hub 072,5999,Misc Retail,IN,RJ,Kolkata,SMALL,MEDIUM,0.05
+M000073,Blue Pine Apparel 073,5732,Electronics,IN,KA,Bengaluru,SMALL,MEDIUM,0.07
+M000074,Metro Fuel Station 074,4814,Telecom,US,,,MID,MEDIUM,0.05
+M000075,Sunrise Department Store 075,6011,ATMs,US,,,SMALL,MEDIUM,0.1
+M000076,Golden Lane Jewelry 076,4829,Money Transfer,AE,,,SMALL,HIGH,0.12
+M000077,Prime Direct Media 077,5967,Direct Marketing,IN,TN,Chennai,SMALL,HIGH,0.16
+M000078,Rapid Transfer Co 078,7995,Betting/Gambling,IN,TN,Bengaluru,SMALL,HIGH,0.2
+M000079,Atlas Gaming 079,5311,Department Stores,IN,WB,Ahmedabad,LARGE,LOW,0.04
+M000080,Orbit Bazaar 080,5944,Jewelry Stores,US,,,MID,MEDIUM,0.1
+M000081,Pioneer Restaurant Group 081,5541,Fuel,CA,,,SMALL,LOW,0.02
+M000082,Nova Retail 082,5691,Apparel,IN,HR,Mumbai,MID,LOW,0.03
+M000083,Apex Mobile Center 083,4821,Wire Transfer,US,,,SMALL,HIGH,0.14
+M000084,Acme Electronics 084,5411,Grocery Stores,GB,,,SMALL,LOW,0.02
+M000085,North Star Telecom 085,5812,Restaurants,AE,,,MID,LOW,0.03
+M000086,City Grocery Hub 086,5999,Misc Retail,US,,,MID,MEDIUM,0.05
+M000087,Blue Pine Apparel 087,5732,Electronics,US,,,SMALL,MEDIUM,0.07
+M000088,Metro Fuel Station 088,4814,Telecom,US,,,SMALL,MEDIUM,0.05
+M000089,Sunrise Department Store 089,6011,ATMs,US,,,LARGE,MEDIUM,0.1
+M000090,Golden Lane Jewelry 090,4829,Money Transfer,US,,,SMALL,HIGH,0.12
+M000091,Prime Direct Media 091,5967,Direct Marketing,US,,,SMALL,HIGH,0.16
+M000092,Rapid Transfer Co 092,7995,Betting/Gambling,IN,RJ,Chennai,SMALL,HIGH,0.2
+M000093,Atlas Gaming 093,5311,Department Stores,AE,,,SMALL,LOW,0.04
+M000094,Orbit Bazaar 094,5944,Jewelry Stores,GB,,,SMALL,MEDIUM,0.1
+M000095,Pioneer Restaurant Group 095,5541,Fuel,IN,KA,Jaipur,SMALL,LOW,0.02
+M000096,Nova Retail 096,5691,Apparel,GB,,,SMALL,LOW,0.03
+M000097,Apex Mobile Center 097,4821,Wire Transfer,IN,DL,Kolkata,SMALL,HIGH,0.14
+M000098,Acme Electronics 098,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000099,North Star Telecom 099,5812,Restaurants,IN,DL,Mumbai,MID,LOW,0.03
+M000100,City Grocery Hub 100,5999,Misc Retail,IN,MH,Delhi,SMALL,MEDIUM,0.05
+M000101,Blue Pine Apparel 101,5732,Electronics,CA,,,LARGE,MEDIUM,0.07
+M000102,Metro Fuel Station 102,4814,Telecom,US,,,MID,MEDIUM,0.05
+M000103,Sunrise Department Store 103,6011,ATMs,IN,RJ,Mumbai,SMALL,MEDIUM,0.1
+M000104,Golden Lane Jewelry 104,4829,Money Transfer,IN,MH,Delhi,SMALL,HIGH,0.12
+M000105,Prime Direct Media 105,5967,Direct Marketing,IN,DL,Ahmedabad,SMALL,HIGH,0.16
+M000106,Rapid Transfer Co 106,7995,Betting/Gambling,IN,KA,Jaipur,SMALL,HIGH,0.2
+M000107,Atlas Gaming 107,5311,Department Stores,IN,HR,Ahmedabad,MID,LOW,0.04
+M000108,Orbit Bazaar 108,5944,Jewelry Stores,US,,,MID,MEDIUM,0.1
+M000109,Pioneer Restaurant Group 109,5541,Fuel,IN,RJ,Bengaluru,LARGE,LOW,0.02
+M000110,Nova Retail 110,5691,Apparel,US,,,SMALL,LOW,0.03
+M000111,Apex Mobile Center 111,4821,Wire Transfer,IN,KA,Chennai,MID,HIGH,0.14
+M000112,Acme Electronics 112,5411,Grocery Stores,CA,,,SMALL,LOW,0.02
+M000113,North Star Telecom 113,5812,Restaurants,GB,,,LARGE,LOW,0.03
+M000114,City Grocery Hub 114,5999,Misc Retail,IN,KA,Gurugram,SMALL,MEDIUM,0.05
+M000115,Blue Pine Apparel 115,5732,Electronics,IN,KA,Delhi,SMALL,MEDIUM,0.07
+M000116,Metro Fuel Station 116,4814,Telecom,IN,RJ,Jaipur,MID,MEDIUM,0.05
+M000117,Sunrise Department Store 117,6011,ATMs,AE,,,SMALL,MEDIUM,0.1
+M000118,Golden Lane Jewelry 118,4829,Money Transfer,IN,HR,Delhi,SMALL,HIGH,0.12
+M000119,Prime Direct Media 119,5967,Direct Marketing,GB,,,LARGE,HIGH,0.16
+M000120,Rapid Transfer Co 120,7995,Betting/Gambling,IN,GJ,Mumbai,SMALL,HIGH,0.2
+M000121,Atlas Gaming 121,5311,Department Stores,IN,HR,Chennai,MID,LOW,0.04
+M000122,Orbit Bazaar 122,5944,Jewelry Stores,IN,DL,Chennai,LARGE,MEDIUM,0.1
+M000123,Pioneer Restaurant Group 123,5541,Fuel,SG,,,SMALL,LOW,0.02
+M000124,Nova Retail 124,5691,Apparel,IN,TN,Kolkata,MID,LOW,0.03
+M000125,Apex Mobile Center 125,4821,Wire Transfer,SG,,,MID,HIGH,0.14
+M000126,Acme Electronics 126,5411,Grocery Stores,IN,KA,Ahmedabad,MID,LOW,0.02
+M000127,North Star Telecom 127,5812,Restaurants,GB,,,MID,LOW,0.03
+M000128,City Grocery Hub 128,5999,Misc Retail,IN,RJ,Kolkata,SMALL,MEDIUM,0.05
+M000129,Blue Pine Apparel 129,5732,Electronics,IN,HR,Gurugram,MID,MEDIUM,0.07
+M000130,Metro Fuel Station 130,4814,Telecom,US,,,MID,MEDIUM,0.05
+M000131,Sunrise Department Store 131,6011,ATMs,IN,KA,Kolkata,MID,MEDIUM,0.1
+M000132,Golden Lane Jewelry 132,4829,Money Transfer,IN,KA,Ahmedabad,LARGE,HIGH,0.12
+M000133,Prime Direct Media 133,5967,Direct Marketing,US,,,MID,HIGH,0.16
+M000134,Rapid Transfer Co 134,7995,Betting/Gambling,GB,,,MID,HIGH,0.2
+M000135,Atlas Gaming 135,5311,Department Stores,US,,,MID,LOW,0.04
+M000136,Orbit Bazaar 136,5944,Jewelry Stores,US,,,SMALL,MEDIUM,0.1
+M000137,Pioneer Restaurant Group 137,5541,Fuel,IN,DL,Chennai,SMALL,LOW,0.02
+M000138,Nova Retail 138,5691,Apparel,IN,MH,Mumbai,SMALL,LOW,0.03
+M000139,Apex Mobile Center 139,4821,Wire Transfer,US,,,LARGE,HIGH,0.14
+M000140,Acme Electronics 140,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000141,North Star Telecom 141,5812,Restaurants,IN,GJ,Mumbai,SMALL,LOW,0.03
+M000142,City Grocery Hub 142,5999,Misc Retail,US,,,SMALL,MEDIUM,0.05
+M000143,Blue Pine Apparel 143,5732,Electronics,SG,,,SMALL,MEDIUM,0.07
+M000144,Metro Fuel Station 144,4814,Telecom,US,,,MID,MEDIUM,0.05
+M000145,Sunrise Department Store 145,6011,ATMs,IN,DL,Ahmedabad,MID,MEDIUM,0.1
+M000146,Golden Lane Jewelry 146,4829,Money Transfer,AE,,,SMALL,HIGH,0.12
+M000147,Prime Direct Media 147,5967,Direct Marketing,GB,,,LARGE,HIGH,0.16
+M000148,Rapid Transfer Co 148,7995,Betting/Gambling,IN,HR,Delhi,LARGE,HIGH,0.2
+M000149,Atlas Gaming 149,5311,Department Stores,IN,RJ,Bengaluru,LARGE,LOW,0.04
+M000150,Orbit Bazaar 150,5944,Jewelry Stores,US,,,SMALL,MEDIUM,0.1
+M000151,Pioneer Restaurant Group 151,5541,Fuel,CA,,,MID,LOW,0.02
+M000152,Nova Retail 152,5691,Apparel,US,,,MID,LOW,0.03
+M000153,Apex Mobile Center 153,4821,Wire Transfer,US,,,MID,HIGH,0.14
+M000154,Acme Electronics 154,5411,Grocery Stores,IN,HR,Ahmedabad,SMALL,LOW,0.02
+M000155,North Star Telecom 155,5812,Restaurants,GB,,,MID,LOW,0.03
+M000156,City Grocery Hub 156,5999,Misc Retail,IN,HR,Delhi,SMALL,MEDIUM,0.05
+M000157,Blue Pine Apparel 157,5732,Electronics,IN,MH,Delhi,SMALL,MEDIUM,0.07
+M000158,Metro Fuel Station 158,4814,Telecom,AE,,,MID,MEDIUM,0.05
+M000159,Sunrise Department Store 159,6011,ATMs,US,,,SMALL,MEDIUM,0.1
+M000160,Golden Lane Jewelry 160,4829,Money Transfer,GB,,,SMALL,HIGH,0.12
+M000161,Prime Direct Media 161,5967,Direct Marketing,GB,,,SMALL,HIGH,0.16
+M000162,Rapid Transfer Co 162,7995,Betting/Gambling,CA,,,SMALL,HIGH,0.2
+M000163,Atlas Gaming 163,5311,Department Stores,IN,WB,Jaipur,SMALL,LOW,0.04
+M000164,Orbit Bazaar 164,5944,Jewelry Stores,SG,,,SMALL,MEDIUM,0.1
+M000165,Pioneer Restaurant Group 165,5541,Fuel,CA,,,MID,LOW,0.02
+M000166,Nova Retail 166,5691,Apparel,IN,WB,Jaipur,LARGE,LOW,0.03
+M000167,Apex Mobile Center 167,4821,Wire Transfer,SG,,,SMALL,HIGH,0.14
+M000168,Acme Electronics 168,5411,Grocery Stores,IN,DL,Chennai,LARGE,LOW,0.02
+M000169,North Star Telecom 169,5812,Restaurants,US,,,SMALL,LOW,0.03
+M000170,City Grocery Hub 170,5999,Misc Retail,IN,KA,Ahmedabad,LARGE,MEDIUM,0.05
+M000171,Blue Pine Apparel 171,5732,Electronics,AE,,,SMALL,MEDIUM,0.07
+M000172,Metro Fuel Station 172,4814,Telecom,IN,DL,Mumbai,SMALL,MEDIUM,0.05
+M000173,Sunrise Department Store 173,6011,ATMs,IN,WB,Bengaluru,MID,MEDIUM,0.1
+M000174,Golden Lane Jewelry 174,4829,Money Transfer,IN,WB,Delhi,MID,HIGH,0.12
+M000175,Prime Direct Media 175,5967,Direct Marketing,US,,,SMALL,HIGH,0.16
+M000176,Rapid Transfer Co 176,7995,Betting/Gambling,IN,HR,Mumbai,LARGE,HIGH,0.2
+M000177,Atlas Gaming 177,5311,Department Stores,US,,,SMALL,LOW,0.04
+M000178,Orbit Bazaar 178,5944,Jewelry Stores,US,,,MID,MEDIUM,0.1
+M000179,Pioneer Restaurant Group 179,5541,Fuel,CA,,,SMALL,LOW,0.02
+M000180,Nova Retail 180,5691,Apparel,IN,WB,Ahmedabad,MID,LOW,0.03
+M000181,Apex Mobile Center 181,4821,Wire Transfer,US,,,SMALL,HIGH,0.14
+M000182,Acme Electronics 182,5411,Grocery Stores,US,,,MID,LOW,0.02
+M000183,North Star Telecom 183,5812,Restaurants,US,,,LARGE,LOW,0.03
+M000184,City Grocery Hub 184,5999,Misc Retail,US,,,SMALL,MEDIUM,0.05
+M000185,Blue Pine Apparel 185,5732,Electronics,IN,MH,Ahmedabad,SMALL,MEDIUM,0.07
+M000186,Metro Fuel Station 186,4814,Telecom,IN,KA,Jaipur,LARGE,MEDIUM,0.05
+M000187,Sunrise Department Store 187,6011,ATMs,US,,,SMALL,MEDIUM,0.1
+M000188,Golden Lane Jewelry 188,4829,Money Transfer,IN,RJ,Gurugram,SMALL,HIGH,0.12
+M000189,Prime Direct Media 189,5967,Direct Marketing,US,,,SMALL,HIGH,0.16
+M000190,Rapid Transfer Co 190,7995,Betting/Gambling,SG,,,MID,HIGH,0.2
+M000191,Atlas Gaming 191,5311,Department Stores,IN,DL,Gurugram,SMALL,LOW,0.04
+M000192,Orbit Bazaar 192,5944,Jewelry Stores,IN,WB,Jaipur,MID,MEDIUM,0.1
+M000193,Pioneer Restaurant Group 193,5541,Fuel,IN,TN,Gurugram,LARGE,LOW,0.02
+M000194,Nova Retail 194,5691,Apparel,IN,MH,Chennai,SMALL,LOW,0.03
+M000195,Apex Mobile Center 195,4821,Wire Transfer,IN,WB,Delhi,MID,HIGH,0.14
+M000196,Acme Electronics 196,5411,Grocery Stores,AE,,,SMALL,LOW,0.02
+M000197,North Star Telecom 197,5812,Restaurants,IN,WB,Mumbai,SMALL,LOW,0.03
+M000198,City Grocery Hub 198,5999,Misc Retail,IN,WB,Delhi,LARGE,MEDIUM,0.05
+M000199,Blue Pine Apparel 199,5732,Electronics,US,,,SMALL,MEDIUM,0.07
+M000200,Metro Fuel Station 200,4814,Telecom,US,,,SMALL,MEDIUM,0.05
+M000201,Sunrise Department Store 201,6011,ATMs,AE,,,SMALL,MEDIUM,0.1
+M000202,Golden Lane Jewelry 202,4829,Money Transfer,US,,,SMALL,HIGH,0.12
+M000203,Prime Direct Media 203,5967,Direct Marketing,IN,GJ,Ahmedabad,SMALL,HIGH,0.16
+M000204,Rapid Transfer Co 204,7995,Betting/Gambling,AE,,,SMALL,HIGH,0.2
+M000205,Atlas Gaming 205,5311,Department Stores,GB,,,SMALL,LOW,0.04
+M000206,Orbit Bazaar 206,5944,Jewelry Stores,US,,,SMALL,MEDIUM,0.1
+M000207,Pioneer Restaurant Group 207,5541,Fuel,US,,,SMALL,LOW,0.02
+M000208,Nova Retail 208,5691,Apparel,US,,,MID,LOW,0.03
+M000209,Apex Mobile Center 209,4821,Wire Transfer,US,,,MID,HIGH,0.14
+M000210,Acme Electronics 210,5411,Grocery Stores,CA,,,MID,LOW,0.02
+M000211,North Star Telecom 211,5812,Restaurants,IN,KA,Bengaluru,SMALL,LOW,0.03
+M000212,City Grocery Hub 212,5999,Misc Retail,IN,DL,Gurugram,LARGE,MEDIUM,0.05
+M000213,Blue Pine Apparel 213,5732,Electronics,US,,,LARGE,MEDIUM,0.07
+M000214,Metro Fuel Station 214,4814,Telecom,GB,,,SMALL,MEDIUM,0.05
+M000215,Sunrise Department Store 215,6011,ATMs,IN,DL,Kolkata,MID,MEDIUM,0.1
+M000216,Golden Lane Jewelry 216,4829,Money Transfer,IN,TN,Bengaluru,SMALL,HIGH,0.12
+M000217,Prime Direct Media 217,5967,Direct Marketing,IN,DL,Chennai,MID,HIGH,0.16
+M000218,Rapid Transfer Co 218,7995,Betting/Gambling,IN,TN,Delhi,SMALL,HIGH,0.2
+M000219,Atlas Gaming 219,5311,Department Stores,US,,,SMALL,LOW,0.04
+M000220,Orbit Bazaar 220,5944,Jewelry Stores,IN,KA,Delhi,SMALL,MEDIUM,0.1
+M000221,Pioneer Restaurant Group 221,5541,Fuel,US,,,SMALL,LOW,0.02
+M000222,Nova Retail 222,5691,Apparel,IN,WB,Kolkata,MID,LOW,0.03
+M000223,Apex Mobile Center 223,4821,Wire Transfer,US,,,MID,HIGH,0.14
+M000224,Acme Electronics 224,5411,Grocery Stores,AE,,,SMALL,LOW,0.02
+M000225,North Star Telecom 225,5812,Restaurants,AE,,,MID,LOW,0.03
+M000226,City Grocery Hub 226,5999,Misc Retail,IN,MH,Mumbai,MID,MEDIUM,0.05
+M000227,Blue Pine Apparel 227,5732,Electronics,IN,WB,Jaipur,MID,MEDIUM,0.07
+M000228,Metro Fuel Station 228,4814,Telecom,SG,,,SMALL,MEDIUM,0.05
+M000229,Sunrise Department Store 229,6011,ATMs,CA,,,SMALL,MEDIUM,0.1
+M000230,Golden Lane Jewelry 230,4829,Money Transfer,US,,,SMALL,HIGH,0.12
+M000231,Prime Direct Media 231,5967,Direct Marketing,US,,,SMALL,HIGH,0.16
+M000232,Rapid Transfer Co 232,7995,Betting/Gambling,US,,,SMALL,HIGH,0.2
+M000233,Atlas Gaming 233,5311,Department Stores,US,,,MID,LOW,0.04
+M000234,Orbit Bazaar 234,5944,Jewelry Stores,IN,DL,Mumbai,MID,MEDIUM,0.1
+M000235,Pioneer Restaurant Group 235,5541,Fuel,IN,WB,Bengaluru,SMALL,LOW,0.02
+M000236,Nova Retail 236,5691,Apparel,CA,,,MID,LOW,0.03
+M000237,Apex Mobile Center 237,4821,Wire Transfer,CA,,,MID,HIGH,0.14
+M000238,Acme Electronics 238,5411,Grocery Stores,SG,,,SMALL,LOW,0.02
+M000239,North Star Telecom 239,5812,Restaurants,IN,TN,Kolkata,MID,LOW,0.03
+M000240,City Grocery Hub 240,5999,Misc Retail,GB,,,SMALL,MEDIUM,0.05
+M000241,Blue Pine Apparel 241,5732,Electronics,IN,GJ,Chennai,LARGE,MEDIUM,0.07
+M000242,Metro Fuel Station 242,4814,Telecom,AE,,,SMALL,MEDIUM,0.05
+M000243,Sunrise Department Store 243,6011,ATMs,US,,,MID,MEDIUM,0.1
+M000244,Golden Lane Jewelry 244,4829,Money Transfer,US,,,SMALL,HIGH,0.12
+M000245,Prime Direct Media 245,5967,Direct Marketing,US,,,MID,HIGH,0.16
+M000246,Rapid Transfer Co 246,7995,Betting/Gambling,US,,,SMALL,HIGH,0.2
+M000247,Atlas Gaming 247,5311,Department Stores,US,,,MID,LOW,0.04
+M000248,Orbit Bazaar 248,5944,Jewelry Stores,IN,KA,Gurugram,SMALL,MEDIUM,0.1
+M000249,Pioneer Restaurant Group 249,5541,Fuel,US,,,MID,LOW,0.02
+M000250,Nova Retail 250,5691,Apparel,IN,HR,Delhi,MID,LOW,0.03
+M000251,Apex Mobile Center 251,4821,Wire Transfer,GB,,,SMALL,HIGH,0.14
+M000252,Acme Electronics 252,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000253,North Star Telecom 253,5812,Restaurants,IN,RJ,Delhi,SMALL,LOW,0.03
+M000254,City Grocery Hub 254,5999,Misc Retail,IN,HR,Delhi,MID,MEDIUM,0.05
+M000255,Blue Pine Apparel 255,5732,Electronics,IN,HR,Jaipur,SMALL,MEDIUM,0.07
+M000256,Metro Fuel Station 256,4814,Telecom,GB,,,MID,MEDIUM,0.05
+M000257,Sunrise Department Store 257,6011,ATMs,GB,,,LARGE,MEDIUM,0.1
+M000258,Golden Lane Jewelry 258,4829,Money Transfer,GB,,,LARGE,HIGH,0.12
+M000259,Prime Direct Media 259,5967,Direct Marketing,IN,WB,Kolkata,LARGE,HIGH,0.16
+M000260,Rapid Transfer Co 260,7995,Betting/Gambling,IN,GJ,Chennai,MID,HIGH,0.2
+M000261,Atlas Gaming 261,5311,Department Stores,US,,,SMALL,LOW,0.04
+M000262,Orbit Bazaar 262,5944,Jewelry Stores,US,,,SMALL,MEDIUM,0.1
+M000263,Pioneer Restaurant Group 263,5541,Fuel,IN,HR,Chennai,MID,LOW,0.02
+M000264,Nova Retail 264,5691,Apparel,AE,,,LARGE,LOW,0.03
+M000265,Apex Mobile Center 265,4821,Wire Transfer,IN,WB,Mumbai,MID,HIGH,0.14
+M000266,Acme Electronics 266,5411,Grocery Stores,US,,,SMALL,LOW,0.02
+M000267,North Star Telecom 267,5812,Restaurants,US,,,MID,LOW,0.03
+M000268,City Grocery Hub 268,5999,Misc Retail,US,,,SMALL,MEDIUM,0.05
+M000269,Blue Pine Apparel 269,5732,Electronics,US,,,SMALL,MEDIUM,0.07
+M000270,Metro Fuel Station 270,4814,Telecom,IN,RJ,Jaipur,SMALL,MEDIUM,0.05
+M000271,Sunrise Department Store 271,6011,ATMs,SG,,,SMALL,MEDIUM,0.1
+M000272,Golden Lane Jewelry 272,4829,Money Transfer,GB,,,MID,HIGH,0.12
+M000273,Prime Direct Media 273,5967,Direct Marketing,IN,DL,Chennai,MID,HIGH,0.16
+M000274,Rapid Transfer Co 274,7995,Betting/Gambling,AE,,,SMALL,HIGH,0.2
+M000275,Atlas Gaming 275,5311,Department Stores,SG,,,SMALL,LOW,0.04
+M000276,Orbit Bazaar 276,5944,Jewelry Stores,GB,,,SMALL,MEDIUM,0.1
+M000277,Pioneer Restaurant Group 277,5541,Fuel,IN,GJ,Jaipur,SMALL,LOW,0.02
+M000278,Nova Retail 278,5691,Apparel,GB,,,SMALL,LOW,0.03
+M000279,Apex Mobile Center 279,4821,Wire Transfer,IN,MH,Mumbai,MID,HIGH,0.14
+M000280,Acme Electronics 280,5411,Grocery Stores,SG,,,MID,LOW,0.02
+M000281,North Star Telecom 281,5812,Restaurants,IN,GJ,Chennai,SMALL,LOW,0.03
+M000282,City Grocery Hub 282,5999,Misc Retail,AE,,,SMALL,MEDIUM,0.05
+M000283,Blue Pine Apparel 283,5732,Electronics,CA,,,SMALL,MEDIUM,0.07
+M000284,Metro Fuel Station 284,4814,Telecom,IN,RJ,Kolkata,MID,MEDIUM,0.05
+M000285,Sunrise Department Store 285,6011,ATMs,IN,TN,Ahmedabad,SMALL,MEDIUM,0.1
+M000286,Golden Lane Jewelry 286,4829,Money Transfer,IN,KA,Delhi,SMALL,HIGH,0.12
+M000287,Prime Direct Media 287,5967,Direct Marketing,IN,HR,Gurugram,MID,HIGH,0.16
+M000288,Rapid Transfer Co 288,7995,Betting/Gambling,US,,,SMALL,HIGH,0.2
+M000289,Atlas Gaming 289,5311,Department Stores,GB,,,SMALL,LOW,0.04
+M000290,Orbit Bazaar 290,5944,Jewelry Stores,IN,RJ,Gurugram,MID,MEDIUM,0.1
+M000291,Pioneer Restaurant Group 291,5541,Fuel,IN,HR,Gurugram,SMALL,LOW,0.02
+M000292,Nova Retail 292,5691,Apparel,US,,,SMALL,LOW,0.03
+M000293,Apex Mobile Center 293,4821,Wire Transfer,US,,,SMALL,HIGH,0.14
+M000294,Acme Electronics 294,5411,Grocery Stores,US,,,LARGE,LOW,0.02
+M000295,North Star Telecom 295,5812,Restaurants,IN,GJ,Kolkata,LARGE,LOW,0.03
+M000296,City Grocery Hub 296,5999,Misc Retail,IN,GJ,Kolkata,SMALL,MEDIUM,0.05
+M000297,Blue Pine Apparel 297,5732,Electronics,US,,,MID,MEDIUM,0.07
+M000298,Metro Fuel Station 298,4814,Telecom,IN,TN,Jaipur,SMALL,MEDIUM,0.05
+M000299,Sunrise Department Store 299,6011,ATMs,IN,MH,Delhi,SMALL,MEDIUM,0.1
